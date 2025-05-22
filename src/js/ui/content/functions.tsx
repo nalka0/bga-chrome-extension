@@ -447,33 +447,73 @@ const initGamesObserver = (config: Configuration, gameName: string) => {
 
 export const initGamePanelObserver = () => {
 	const gaminfoElt = document.querySelector(".block-panel-gaminfo");
-
-	if (!gaminfoElt) {
+	const infosGrid = document.querySelector(`.grid-cols-2`);
+	if (!gaminfoElt && !infosGrid) {
 		return null;
 	}
 
-	const updateOngoingGameCount = () => {
+	const updateGamePanelPage = () =>
+	{
 		const counterId = "in_progress_games_count";
-
-		const ongoingGameCount = gaminfoElt.querySelectorAll('.bga-table-list-item').length;
 		let counter = document.querySelector(`#${counterId}`);
-
 		if (!counter) {
-			const titleContainer = gaminfoElt.querySelector('.bga-page-section__title');
-			if (!titleContainer) {
-				return;
+			const titleContainer = gaminfoElt?.querySelector('.bga-page-section__title');
+			if (titleContainer)
+			{
+				counter = document.createElement("span");
+				counter.id = counterId;
+				titleContainer.appendChild(counter);
 			}
-
-			counter = document.createElement("span");
-			counter.id = counterId;
-			titleContainer.appendChild(counter);
 		}
 
-		counter.textContent = `(${ongoingGameCount})`;
+		if (counter)
+		{
+			const ongoingGameCount = gaminfoElt?.querySelectorAll('.bga-table-list-item').length;
+			counter.textContent = ` (${ongoingGameCount})`;
+		}
+
+		const lastLine = infosGrid?.lastElementChild?.lastElementChild;
+		const extraLineLabelId = "ext_last_updated_label";
+		if (lastLine && !document.querySelector(`#${extraLineLabelId}`))
+		{
+			const versionNumber = lastLine.textContent; // format: yymmdd-hhmm
+			if (versionNumber)
+			{
+				const dateInfo = new Date(
+					parseInt("20" + versionNumber.substring(0, 2)),
+					parseInt(versionNumber.substring(2, 4)) - 1,
+					parseInt(versionNumber.substring(4, 6)),
+					parseInt(versionNumber.substring(7, 9)),
+					parseInt(versionNumber.substring(9, 11)),
+				);
+				console.log(`date info : ${dateInfo}`);
+				if (dateInfo)
+				{
+					const label = document.createElement("div");
+					label.id = extraLineLabelId;
+					label.classList.add("game-info__label", "svelte-i1k73e");
+					infosGrid.appendChild(label);
+					label.textContent = "Last update";
+					const value = document.createElement("div");
+					value.id = "ext_last_updated_value";
+					value.classList.add("game-info__value", "svelte-i1k73e");
+					infosGrid.appendChild(value);
+					const valueContent = document.createElement("div");
+					valueContent.textContent = dateInfo.toString();
+					value.appendChild(valueContent);
+				}
+			}
+		}
 	}
 
-	const observer = new MutationObserver(updateOngoingGameCount);
-	updateOngoingGameCount();
+	const observer = new MutationObserver(updateGamePanelPage);
+	updateGamePanelPage();
+	var observed = document.querySelector(".bga-game-panel__grid");
+	if (observed)
+	{
+		observer.observe(observed, { childList: true });
+	}
+
 	return observer;
 };
 
